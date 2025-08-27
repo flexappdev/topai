@@ -28,9 +28,37 @@ app.get('/api/mongo', async (req, res) => {
   try {
     const db = client.db('AIDB');
     const collections = await db.listCollections().toArray();
-    const dailyCollection = db.collection('DAILY');
-    const latestDoc = await dailyCollection.find().sort({ _id: -1 }).limit(1).toArray();
-    res.status(200).json({ collections, latestDoc });
+    res.status(200).json({ collections });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: (e as Error).message });
+  }
+});
+
+app.get('/api/mongo/:collectionName', async (req, res) => {
+  try {
+    const { collectionName } = req.params;
+    const db = client.db('AIDB');
+    const collection = db.collection(collectionName);
+    
+    // Get total count
+    const count = await collection.countDocuments();
+    
+    // Get first document
+    const firstDoc = await collection.findOne({}, { sort: { _id: 1 } });
+    
+    // Get latest document
+    const latestDoc = await collection.findOne({}, { sort: { _id: -1 } });
+    
+    // Get a sample document
+    const sampleDoc = await collection.aggregate([{ $sample: { size: 1 } }]).toArray();
+    
+    res.status(200).json({
+      count,
+      firstDoc,
+      latestDoc,
+      sampleDoc: sampleDoc[0] || null
+    });
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: (e as Error).message });
@@ -44,6 +72,18 @@ app.post('/api/lists', async (req, res) => {
     const listData = req.body;
     const result = await dailyCollection.insertOne(listData);
     res.status(201).json(result);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: (e as Error).message });
+  }
+});
+
+app.get('/api/daily', async (req, res) => {
+  try {
+    const db = client.db('AIDB');
+    const dailyCollection = db.collection('DAILY');
+    const documents = await dailyCollection.find({}).toArray();
+    res.status(200).json(documents);
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: (e as Error).message });

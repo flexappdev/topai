@@ -9,10 +9,12 @@ import ListView from '@/components/ListView';
 import ListDetail from '@/components/ListDetail';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
+import AiListView from '@/components/AiListView';
 
 const Index = () => {
   const [isDark, setIsDark] = useState(true);
   const [lists, setLists] = useState<TopList[]>(sampleLists);
+  const [aiLists, setAiLists] = useState<TopList[]>([]);
   const [selectedList, setSelectedList] = useState<TopList | null>(null);
   const [activeTab, setActiveTab] = useState('browse');
   const { toast } = useToast();
@@ -21,6 +23,26 @@ const Index = () => {
     document.documentElement.classList.toggle('dark', isDark);
     document.documentElement.classList.toggle('light', !isDark);
   }, [isDark]);
+
+  const fetchAiLists = async () => {
+    try {
+      const response = await fetch(`/api/daily`);
+      if (response.ok) {
+        const data = await response.json();
+        setAiLists(data);
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to fetch AI lists.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  useEffect(() => {
+    fetchAiLists();
+  }, []);
 
   const handleThemeToggle = () => {
     setIsDark(!isDark);
@@ -95,9 +117,10 @@ const Index = () => {
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto mb-8">
+            <TabsList className="grid w-full grid-cols-3 max-w-md mx-auto mb-8">
               <TabsTrigger value="create">Create List</TabsTrigger>
               <TabsTrigger value="browse">Browse Lists</TabsTrigger>
+              <TabsTrigger value="ai">AI Lists</TabsTrigger>
             </TabsList>
 
             <TabsContent value="create" className="space-y-6">
@@ -106,6 +129,10 @@ const Index = () => {
 
             <TabsContent value="browse" className="space-y-6">
               <ListView lists={lists} onListSelect={handleListSelect} />
+            </TabsContent>
+            
+            <TabsContent value="ai" className="space-y-6">
+              <AiListView lists={aiLists} onListSelect={handleListSelect} />
             </TabsContent>
           </Tabs>
         </div>
