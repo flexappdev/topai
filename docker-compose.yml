@@ -1,0 +1,17 @@
+version: "3.8"
+
+services:
+  frontend:
+    image: nginxdemos/hello
+    ports:
+      - "24500:80"
+
+  backend:
+    image: kennethreitz/httpbin
+    ports:
+      - "24501:80"
+
+  backoffice:
+    image: nginxdemos/hello
+    ports:
+      - "24502:80"
